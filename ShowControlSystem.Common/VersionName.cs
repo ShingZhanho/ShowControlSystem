@@ -13,7 +13,7 @@ public struct VersionName {
     public VersionType VersionType { get; set; } = VersionType.Release;
     public int Suffix { get; set; } = 1;
 
-    private const string RegexPattern = @"[vV]?\d+\.\d+\.{0,}\d{0,}\.{0,}\d{0,}(-release$|-beta\.\d+|-hotfix(\.+\d+)*)*$";
+    private const string RegexPattern = @"[vV]?\d+\.\d+\.{0,}\d{0,}\.{0,}\d{0,}(-release$|-beta\.\d+)*$";
     /// <summary>
     /// Create a VersionName object from a version string.
     /// </summary>
@@ -42,7 +42,6 @@ public struct VersionName {
             VersionType = verSuffix.Split('.')[0].ToLower() switch {
                 "release" => VersionType.Release,
                 "beta" => VersionType.Beta,
-                "hotfix" => VersionType.Hotfix,
                 _ => VersionType.Release
             };
             Suffix = verSuffix.Split('.').Length == 2 ? int.Parse(verSuffix.Split('.')[1]) : 1;
@@ -51,4 +50,52 @@ public struct VersionName {
             throw new ArgumentException("Provided version string is invalid.", nameof(name), e);
         }
     }
+    
+    // operators
+    public static bool operator ==(VersionName a, VersionName b) =>
+        a.Major == b.Major &&
+        a.Minor == b.Minor &&
+        a.Patch == b.Patch &&
+        a.Build == b.Build &&
+        a.VersionType == b.VersionType &&
+        a.Suffix == b.Suffix;
+
+    public static bool operator !=(VersionName a, VersionName b) => !(a == b);
+
+    public static bool operator >(VersionName a, VersionName b) {
+        if (a == b) return false;
+        if (a.Major != b.Major) return a.Major > b.Major;
+        if (a.Minor != b.Minor) return a.Minor > b.Minor;
+        if (a.Patch != b.Patch) return a.Patch > b.Patch;
+        if (a.Build != b.Build) return a.Build > b.Build;
+        if (a.VersionType != b.VersionType)
+            return a.VersionType == VersionType.Release && b.VersionType == VersionType.Beta;
+        return a.Suffix > b.Suffix;
+    }
+
+    public static bool operator <(VersionName a, VersionName b) => b > a;
+
+    public static bool operator >=(VersionName a, VersionName b) => a == b || a > b;
+
+    public static bool operator <=(VersionName a, VersionName b) => a == b || a < b;
+
+    /// <summary>
+    /// Gets the string value of the VersionName object.
+    /// </summary>
+    /// <param name="includePrefix">Include a "v" prefix in the return value.</param>
+    /// <param name="includeZeroes">Include patch and build numbers even if they are zero.</param>
+    /// <param name="includeType">Include the version type even if it is a release version.</param>
+    /// <returns></returns>
+    public string ToString(bool includePrefix, bool includeZeroes = false, bool includeType = true) {
+        var val = "";
+        if (includePrefix) val += "v";
+        val += $"{Major}.{Minor}";
+        if (includeZeroes || Patch != 0) val += $".{Patch}";
+        if (includeZeroes || Build != 0) val += $".{Build}";
+        if (includeType || VersionType != VersionType.Release) val += $"-{VersionType.ToString().ToLower()}";
+        if (VersionType != VersionType.Release) val += $".{Suffix}";
+        return val;
+    }
+
+    public override string ToString() => ToString(true, false, false);
 }

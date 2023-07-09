@@ -4,5 +4,5 @@
 /// Represents the type of a specific VersionName
 /// </summary>
 public enum VersionType {
-    Release, Beta, Hotfix
+    Release, Beta
 }
