@@ -18,6 +18,8 @@ public class Rundown {
     /// this rundown.
     /// </summary>
     public VersionName MinimumCompatibleVersion { get; }
+    public string Name { get; set; }
+    public DateOnly Date { get; set; }
 
     #endregion
 }
